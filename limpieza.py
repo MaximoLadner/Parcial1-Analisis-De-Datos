@@ -8,11 +8,28 @@ CSV = "base-lesionados-2021.csv"
 df = pd.read_csv(CSV, encoding="latin1", sep=";")
 
 # ==============================
-# 2️⃣ Mostrar nombres de columnas
+# 2️⃣ Estandarización de nombres de columnas
 # ==============================
+nuevas_columnas = {
+    'CÓDIGO DE PARTIDO (SEGÚN CODIFICACIÓN INDEC)': 'codigo_partido',
+    'PARTIDO': 'partido',
+    'FECHA': 'fecha',
+    'MES': 'mes',
+    'DÍA DE LA SEMANA': 'dia_semana',
+    'DÍA DE LA SEMANA AGRUPADO': 'dia_semana_agrupado',
+    'HORA': 'hora',
+    'DIURNO / NOCTURNO': 'diurno_nocturno',
+    'EDAD': 'edad',
+    'EDAD AGRUPADA': 'edad_agrupada',
+    'SEXO': 'sexo'
+}
+df.columns = [col.upper() if col.upper() not in nuevas_columnas else nuevas_columnas[col.upper()] for col in df.columns]
+
+# Mostrar nombres de columnas
 print("🧩 Nombres de columnas del dataset:")
 for col in df.columns:
     print(f"- {col}")
+
 
 # ==============================
 # 3️⃣ Buscar automáticamente columna de edad
@@ -61,3 +78,33 @@ if col_edad:
         print("\n⚠️ No se encontró la columna 'sexo' para imputar por grupo.")
 else:
     print("\n⚠️ No se encontró ninguna columna relacionada con 'edad'.")
+
+
+
+# ======================
+# 6️⃣ Valores nulos
+# ======================
+# --- Contar nulos por columna ---
+print("\n❌ Nulos por columna")
+print(df.isna().sum())
+# --- Detectar y reemplazar tokens que representan nulos ---
+TOKENS_NULOS = {"", " ", "   ", "-", "na", "NA", "NaN", "nan", "N/A", "Desconocido", "desconocido", "Sin determinar", "sin determinar"} 
+for c in df.columns:
+    if df[c].dtype == object:
+        df[c] = df[c].replace(list(TOKENS_NULOS), pd.NA)
+
+print("\n❌ Nulos tras reemplazo de tokens")
+print(df.isna().sum())
+
+
+# ==============================
+# 7️⃣ Reemplazo de valores nulos
+# ==============================
+df["col_edad"] = pd.to_numeric(df["edad"], errors="coerce")
+# Imputación de 'edad': con la mediana general
+mediana_edad = df["col_edad"].median()
+print(mediana_edad)
+df["edad_mediana"] = df["col_edad"].fillna(mediana_edad)
+df["edad"] = df["edad_mediana"]
+
+print(df.isna().sum())
