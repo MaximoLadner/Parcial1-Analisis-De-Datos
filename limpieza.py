@@ -108,3 +108,29 @@ df["edad_mediana"] = df["col_edad"].fillna(mediana_edad)
 df["edad"] = df["edad_mediana"]
 
 print(df.isna().sum())
+
+
+
+# ==============================
+# 8️⃣ Duplicados
+# ==============================
+
+# 1️⃣ Detectar duplicados exactos (todas las columnas)
+duplicados_exactos = df.duplicated()
+print("\n🟡 Cantidad de filas duplicadas exactas:", duplicados_exactos.sum())
+
+# 2️⃣ Detectar duplicados por columna tipo ID ('codigo_partido')
+col_id = "codigo_partido"
+if col_id in df.columns:
+    duplicados_id = df.duplicated(subset=[col_id])
+    print(f"\n🟡 Cantidad de duplicados según columna '{col_id}':", duplicados_id.sum(), "igualmente esto no importa ya que obviamente va a ver registros que compartan el mismo codigo de partido")
+
+
+# 3️⃣ Eliminar duplicados exactos
+filas_antes = df.shape[0]
+df = df.drop_duplicates()
+filas_despues = df.shape[0]
+print(f"\n✅ Se eliminaron {filas_antes - filas_despues} filas duplicadas exactas.")
+print(f"Filas restantes en el dataset: {filas_despues} ")
+
+
