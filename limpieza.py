@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 # ==============================
 # 1️⃣ Cargar dataset
@@ -122,9 +123,6 @@ print(f"\n✅ Se eliminaron {filas_antes - filas_despues} filas duplicadas exact
 print(f"Filas restantes en el dataset: {filas_despues} ")
 
 
-### PUNTO 3 Parcial --------------------------------
-
-
 # ==============================
 # 3️⃣ Buscar automáticamente columna de edad
 # ==============================
@@ -238,3 +236,84 @@ if "edad" in df.columns and "sexo" in df.columns:
 else:
     print("\n⚠️ No se encontraron las columnas 'edad' y/o 'sexo' para graficar el histograma superpuesto.")
 
+
+
+# ==============================
+# 9️⃣ Boxplot por categoría
+# ==============================
+### Se puede identificar si los lesionados de la noche son, en promedio, más jóvenes o si tienen más outliers de edad.
+
+if "edad" in df.columns:
+    df["edad"] = pd.to_numeric(df["edad"], errors="coerce")
+
+# Obtener hora como número (hora entera 0-23) desde cadenas "HH:MM"
+if "hora" in df.columns:
+    df["hora_ts"] = pd.to_datetime(df["hora"], format="%H:%M", errors="coerce")
+    df["hora_num"] = df["hora_ts"].dt.hour
+else:
+    df["hora_num"] = pd.NA
+
+
+
+if "diurno_nocturno" in df.columns and "edad" in df.columns:
+    plt.figure(figsize=(8, 6))
+    sns.boxplot(x="diurno_nocturno", y="edad", data=df.dropna(subset=["edad", "diurno_nocturno"]))
+    plt.title("Distribución de Edad de Lesionados según Momento del Día")
+    plt.xlabel("Momento del Evento")
+    plt.ylabel("Edad (Años)")
+    plt.grid(axis="y", alpha=0.4)
+    plt.show()
+else:
+    print("\n⚠️ No se encontraron las columnas necesarias para graficar el boxplot ('diurno_nocturno' y 'edad').")
+
+
+
+# ==============================
+# Scatterplot bivariado
+# ==============================
+# coloreado por día de la semana agrupado
+### Permite explorar la relación entre el momento exacto del día (hora) y la edad.
+
+requerido = {"hora_num", "edad", "dia_semana_agrupado"}
+if requerido.issubset(df.columns):
+    df_plot = df.dropna(subset=["hora_num", "edad", "dia_semana_agrupado"])
+    if df_plot.empty:
+        print("\n⚠️ No hay datos válidos para el scatterplot después de limpiar NaN en 'hora_num'/'edad'/'dia_semana_agrupado'.")
+    else:
+        n = min(5000, len(df_plot))
+        plt.figure(figsize=(12, 7))
+        sns.scatterplot(x="hora_num", y="edad", hue="dia_semana_agrupado",
+                        data=df_plot.sample(n=n, random_state=42), alpha=0.6, s=20)
+        plt.title("Relación entre Hora del Accidente y Edad, por Día de la Semana")
+        plt.xlabel("Hora del Día (0-23)")
+        plt.ylabel("Edad (Años)")
+        plt.xticks(range(0, 24))
+        plt.grid(axis="both", alpha=0.3)
+        plt.show()
+else:
+    print("\n⚠️ No se encontraron las columnas necesarias para el scatterplot ('hora_num','edad','dia_semana_agrupado').")
+
+
+
+# ==============================
+# Heatmap de correlaciones
+# ==============================
+### Permite identificar rápidamente si las personas de mayor edad tienden a accidentarse en horas específicas, por ejemplo.
+
+if "mes" in df.columns and "numero_mes" not in df.columns:
+    meses_map = {
+        'enero':1, 'febrero':2, 'marzo':3, 'abril':4, 'mayo':5, 'junio':6,
+        'julio':7, 'agosto':8, 'septiembre':9, 'octubre':10, 'noviembre':11, 'diciembre':12
+    }
+    df["numero_mes"] = df["mes"].astype(str).str.strip().str.lower().map(meses_map)
+
+corr_vars = ['edad', 'hora_num', 'numero_mes']
+corr_existen = [c for c in corr_vars if c in df.columns]
+if len(corr_existen) >= 2:
+    correlacion_matriz = df[corr_existen].corr()
+    plt.figure(figsize=(7, 6))
+    sns.heatmap(correlacion_matriz, annot=True, cmap='coolwarm', fmt=".2f", linewidths=.5, linecolor='black')
+    plt.title('Heatmap de Correlaciones entre Variables Numéricas Clave')
+    plt.show()
+else:
+    print(f"\n⚠️ No hay suficientes columnas numéricas disponibles para el heatmap. Columnas encontradas: {corr_existen}")
