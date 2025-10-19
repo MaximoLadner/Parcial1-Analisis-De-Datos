@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 # ==============================
 # 1️⃣ Cargar dataset
@@ -151,7 +152,7 @@ if col_edad:
     print(df_mediana[col_edad].describe()[["mean", "50%", "std"]])
 
     # ==============================
-    # 5️⃣ Imputación por grupo (por ejemplo, por sexo)
+    # 5️⃣  Imputación por grupo (por ejemplo, por sexo)
     # ==============================
     col_sexo = None
     for c in df.columns:
@@ -171,3 +172,69 @@ if col_edad:
         print("\n⚠️ No se encontró la columna 'sexo' para imputar por grupo.")
 else:
     print("\n⚠️ No se encontró ninguna columna relacionada con 'edad'.")
+
+
+# ==============================
+#  6️⃣ Derivación de métricas: variaciones porcentuales mensuales
+#    La variación porcentual muestra si los casos aumentaron o disminuyeron respecto al mes previo.
+#    Numero positivo → aumentó.
+#    Numero negativo → bajó.
+#    NaN → no hay comparación posible (primer mes).
+# ==============================
+if "mes" in df.columns:
+    # Contar cantidad de registros por mes
+    df_mensual = df.groupby("mes").size().reset_index(name="cantidad")
+    df_mensual = df_mensual.sort_values("mes")
+
+    # Calcular variación porcentual mes a mes
+    df_mensual["variacion_%"] = df_mensual["cantidad"].pct_change() * 100
+
+    print("\n📊 Variación porcentual mensual de registros:")
+    print(df_mensual)
+
+
+# ==============================
+# 7️⃣ Histograma simple de una variable numérica (elegimos edad)
+# ==============================
+
+if "edad" in df.columns:
+    df["edad"] = pd.to_numeric(df["edad"], errors="coerce")
+
+    plt.figure(figsize=(8, 5))
+    plt.hist(df["edad"].dropna(), bins=20, edgecolor="black")
+    plt.title("Distribución de edades")
+    plt.xlabel("Edad")
+    plt.ylabel("Frecuencia")
+    plt.grid(True, linestyle="--", alpha=0.6)
+    plt.show()
+else:
+    print("\n⚠️ No se encontró la columna 'edad' para generar el histograma.")
+
+
+
+# ==============================
+# 8️⃣ Histograma superpuesto de dos variables comparables (elegimos edad y sexo)
+# ==============================
+
+# Verificar que existan las columnas necesarias
+if "edad" in df.columns and "sexo" in df.columns:
+    df["edad"] = pd.to_numeric(df["edad"], errors="coerce")
+
+    # Dividir el dataset por sexo
+    hombres = df[df["sexo"].str.lower() == "masculino"]["edad"].dropna()
+    mujeres = df[df["sexo"].str.lower() == "femenino"]["edad"].dropna()
+
+    # Crear histograma superpuesto
+    plt.figure(figsize=(8, 5))
+    plt.hist(hombres, bins=20, alpha=0.6, label="Masculino", edgecolor="black")
+    plt.hist(mujeres, bins=20, alpha=0.6, label="Femenino", edgecolor="black")
+
+    plt.title("Distribución de edad por sexo")
+    plt.xlabel("Edad")
+    plt.ylabel("Frecuencia")
+    plt.legend()
+    plt.grid(True, linestyle="--", alpha=0.6)
+    plt.show()
+else:
+    print("\n⚠️ No se encontraron las columnas 'edad' y/o 'sexo' para graficar el histograma superpuesto.")
+
