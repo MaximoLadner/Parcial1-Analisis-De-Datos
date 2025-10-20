@@ -188,6 +188,7 @@ if "mes" in df.columns:
     df_mensual["variacion_%"] = df_mensual["cantidad"].pct_change() * 100
 
     print("\n📊 Variación porcentual mensual de registros:")
+    print("Aclaracion: Un valor positivo indica un aumento respecto al mes anterior, un valor negativo indica una disminución.")
     print(df_mensual)
 
 
